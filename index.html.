@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+html<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -143,7 +143,6 @@
             <input type="number" id="totalInsertConc" placeholder="e.g., 45" value="45">
         </div>
         <div>
-            <!-- Read-only helper calculation -->
             <label style="color:#6c757d;">Calculated True Insert Conc.</label>
             <div id="trueInsertConcDisplay" style="padding:8px; background:#eef2f5; border-radius:4px; font-weight:bold; font-size:14px; color:#495057;">-</div>
         </div>
@@ -205,15 +204,12 @@
             <span id="resVolInsertMix" style="font-weight:bold; color:#2e7d32; font-size:16px;">-</span>
         </div>
         
-        <div id="backgroundBackboneWarning" style="margin-top:15px; font-size:13px; color:#6c757d; line-height:1.4;">
-            <!-- Background warnings will load dynamically here -->
-        </div>
+        <div id="backgroundBackboneWarning" style="margin-top:15px; font-size:13px; color:#6c757d; line-height:1.4;"></div>
     </div>
 </div>
 
 <script>
     function calculateLigation() {
-        // Grab inputs
         const parentSize = parseFloat(document.getElementById('parentVectorSize').value);
         const insertSize = parseFloat(document.getElementById('insertSize').value);
         const totalInsertConc = parseFloat(document.getElementById('totalInsertConc').value);
@@ -233,27 +229,23 @@
             return;
         }
 
-        // 1. Math for the unextracted insert mixture
         const insertFraction = insertSize / parentSize;
         const trueInsertConc = totalInsertConc * insertFraction;
         
-        // Update live-display preview
         document.getElementById('trueInsertConcDisplay').innerText = trueInsertConc.toFixed(2) + " ng/µL";
 
-        // 2. Volume of destination vector to pipette
         const volVector = destMass / destConc;
-
-        // 3. NEBiocalculator standard formula for required pure insert mass:
-        // Mass Insert (ng) = Ratio * DestVectorMass (ng) * (Insert Size / Dest Vector Size)
         const pureInsertMassNeeded = ratio * destMass * (insertSize / destSize);
-
-        // 4. Volume of the mix needed to get that pure insert mass
-        // Vol = Pure Mass Needed / True Insert Concentration
         const volInsertMixNeeded = pureInsertMassNeeded / trueInsertConc;
 
-        // 5. Calculate how much background parent backbone is carrying over into the ligation tube
         const backboneSize = parentSize - insertSize;
         const massBackboneCarried = volInsertMixNeeded * (totalInsertConc * (backboneSize / parentSize));
 
-        // Populating UI Elements
         document.getElementById('resFraction').innerText = (insertFraction * 100).toFixed(1) + "% of total mass";
+        document.getElementById('resTrueConc').innerText = trueInsertConc.toFixed(2) + " ng/µL";
+        document.getElementById('resVolVector').innerText = volVector.toFixed(2) + " µL (" + destMass + " ng)";
+        document.getElementById('resMassInsertNeeded').innerText = pureInsertMassNeeded.toFixed(1) + " ng";
+        document.getElementById('resVolInsertMix').innerText = volInsertMixNeeded.toFixed(2) + " µL";
+
+        let warningHTML = `💡 <strong>Note on Background:</strong> This volume contains exactly the correct amount of insert, but will also introduce <strong>${massBackboneCarried.toFixed(1)} ng</strong> of the old parent vector backbone into your ligation. `;
+        if (massBackboneCarried > (destMass * 0.5)) {
