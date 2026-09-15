@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ligation Calculator (No Gel Extraction Insert)</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f6f9;
+            color: #333;
+            line-height: 1.5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 650px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        h1 {
+            color: #0056b3;
+            font-size: 24px;
+            margin-top: 0;
+            border-bottom: 2px solid #eef2f5;
+            padding-bottom: 10px;
+        }
+        .note {
+            background-color: #fff8e1;
+            border-left: 4px solid #ffb300;
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-weight: bold;
+            color: #495057;
+            margin-top: 15px;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #80bdff;
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+        }
+        button {
+            width: 100%;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0069d9;
+        }
+        .results {
+            margin-top: 25px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+            display: none;
+        }
+        .results h2 {
+            font-size: 18px;
+            color: #212529;
+            margin-top: 0;
+        }
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px dashed #dee2e6;
+        }
+        .result-item:last-child {
+            border-bottom: none;
+        }
+        .val {
+            font-weight: bold;
+            color: #28a745;
+        }
+        .warning {
+            color: #dc3545;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Ligation Calculator <span style="font-size:14px; font-weight:normal; color:#6c757d;">(No Gel Extraction)</span></h1>
+    
+    <div class="note">
+        <strong>How this works:</strong> Because you only did a PCR cleanup on your digested parent plasmid, your solution contains a 1:1 molar ratio of the insert and the old vector backbone. This tool adjusts your Nanodrop reading to find the <em>true</em> concentration of the insert fragment.
+    </div>
+
+    <!-- STEP 1: THE UNEXTRACTED INSERT MIXTURE -->
+    <div class="section-title">1. Digested Source/Parent Vector (Insert Mix)</div>
+    <div class="grid">
+        <div>
+            <label for="parentVectorSize">Total Parent Vector Size (bp)</label>
+            <input type="number" id="parentVectorSize" placeholder="e.g., 5000" value="5000">
+        </div>
+        <div>
+            <label for="insertSize">Insert Fragment Size (bp)</label>
+            <input type="number" id="insertSize" placeholder="e.g., 1200" value="1200">
+        </div>
+    </div>
+    <div class="grid">
+        <div>
+            <label for="totalInsertConc">Measured Mix Conc. (ng/µL)</label>
+            <input type="number" id="totalInsertConc" placeholder="e.g., 45" value="45">
+        </div>
+        <div>
+            <!-- Read-only helper calculation -->
+            <label style="color:#6c757d;">Calculated True Insert Conc.</label>
+            <div id="trueInsertConcDisplay" style="padding:8px; background:#eef2f5; border-radius:4px; font-weight:bold; font-size:14px; color:#495057;">-</div>
+        </div>
+    </div>
+
+    <!-- STEP 2: THE DESTINATION VECTOR -->
+    <div class="section-title">2. New Destination Vector</div>
+    <div class="grid">
+        <div>
+            <label for="destVectorSize">Destination Vector Size (bp)</label>
+            <input type="number" id="destVectorSize" placeholder="e.g., 4000" value="4000">
+        </div>
+        <div>
+            <label for="destVectorConc">Dest. Vector Conc. (ng/µL)</label>
+            <input type="number" id="destVectorConc" placeholder="e.g., 20" value="20">
+        </div>
+    </div>
+    <div class="grid">
+        <div>
+            <label for="destVectorMass">Desired Dest. Vector Mass (ng)</label>
+            <input type="number" id="destVectorMass" placeholder="e.g., 50" value="50">
+        </div>
+        <div>
+            <label for="molarRatio">Molar Ratio (Insert : Vector)</label>
+            <select id="molarRatio">
+                <option value="1">1 : 1</option>
+                <option value="2">2 : 1</option>
+                <option value="3" selected>3 : 1 (Recommended)</option>
+                <option value="5">5 : 1</option>
+                <option value="7">7 : 1</option>
+            </select>
+        </div>
+    </div>
+
+    <button onclick="calculateLigation()">Calculate Quantities</button>
+
+    <!-- OUTPUT RESULTS PANEL -->
+    <div class="results" id="resultsPanel">
+        <h2>Ligation Reaction Recipe</h2>
+        
+        <div class="result-item">
+            <span>True Insert Fraction in Mix:</span>
+            <span id="resFraction" class="val">-</span>
+        </div>
+        <div class="result-item">
+            <span>Effective Insert Concentration:</span>
+            <span id="resTrueConc" class="val">-</span>
+        </div>
+        <div class="result-item" style="border-top: 2px solid #dee2e6; margin-top:10px; padding-top:10px;">
+            <span><strong>Volume of Destination Vector:</strong></span>
+            <span id="resVolVector" style="font-weight:bold; color:#0056b3;">-</span>
+        </div>
+        <div class="result-item">
+            <span>Target Mass of pure Insert needed:</span>
+            <span id="resMassInsertNeeded" class="val">-</span>
+        </div>
+        <div class="result-item" style="background:#e8f5e9; padding: 10px; border-radius:4px; margin-top:5px;">
+            <span><strong>Volume of unextracted Insert Mix to add:</strong></span>
+            <span id="resVolInsertMix" style="font-weight:bold; color:#2e7d32; font-size:16px;">-</span>
+        </div>
+        
+        <div id="backgroundBackboneWarning" style="margin-top:15px; font-size:13px; color:#6c757d; line-height:1.4;">
+            <!-- Background warnings will load dynamically here -->
+        </div>
+    </div>
+</div>
+
+<script>
+    function calculateLigation() {
+        // Grab inputs
+        const parentSize = parseFloat(document.getElementById('parentVectorSize').value);
+        const insertSize = parseFloat(document.getElementById('insertSize').value);
+        const totalInsertConc = parseFloat(document.getElementById('totalInsertConc').value);
+        
+        const destSize = parseFloat(document.getElementById('destVectorSize').value);
+        const destConc = parseFloat(document.getElementById('destVectorConc').value);
+        const destMass = parseFloat(document.getElementById('destVectorMass').value);
+        const ratio = parseFloat(document.getElementById('molarRatio').value);
+
+        if (!parentSize || !insertSize || !totalInsertConc || !destSize || !destConc || !destMass) {
+            alert("Please fill out all fields with valid numbers.");
+            return;
+        }
+
+        if (insertSize >= parentSize) {
+            alert("Insert size must be smaller than the total parent vector size.");
+            return;
+        }
+
+        // 1. Math for the unextracted insert mixture
+        const insertFraction = insertSize / parentSize;
+        const trueInsertConc = totalInsertConc * insertFraction;
+        
+        // Update live-display preview
+        document.getElementById('trueInsertConcDisplay').innerText = trueInsertConc.toFixed(2) + " ng/µL";
+
+        // 2. Volume of destination vector to pipette
+        const volVector = destMass / destConc;
+
+        // 3. NEBiocalculator standard formula for required pure insert mass:
+        // Mass Insert (ng) = Ratio * DestVectorMass (ng) * (Insert Size / Dest Vector Size)
+        const pureInsertMassNeeded = ratio * destMass * (insertSize / destSize);
+
+        // 4. Volume of the mix needed to get that pure insert mass
+        // Vol = Pure Mass Needed / True Insert Concentration
+        const volInsertMixNeeded = pureInsertMassNeeded / trueInsertConc;
+
+        // 5. Calculate how much background parent backbone is carrying over into the ligation tube
+        const backboneSize = parentSize - insertSize;
+        const massBackboneCarried = volInsertMixNeeded * (totalInsertConc * (backboneSize / parentSize));
+
+        // Populating UI Elements
+        document.getElementById('resFraction').innerText = (insertFraction * 100).toFixed(1) + "% of total mass";
